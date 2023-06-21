@@ -49,23 +49,9 @@ var CreateBCCmd = &cobra.Command{
 	Args:    cobra.ExactArgs(1),
 	Run:     runCreate,
 }
-var CreateRepositoryCmd = &cobra.Command{
-	Use:     "repository.tpl",
-	Short:   "Create a new repository.tpl",
-	Example: "yy create repository.tpl user",
-	Args:    cobra.ExactArgs(1),
-	Run:     runCreate,
-}
-var CreateModelCmd = &cobra.Command{
-	Use:     "model",
-	Short:   "Create a new model",
-	Example: "yy create model user",
-	Args:    cobra.ExactArgs(1),
-	Run:     runCreate,
-}
 var CreateAllCmd = &cobra.Command{
 	Use:     "all",
-	Short:   "Create a new handler & service & repository.tpl & model",
+	Short:   "Create a new application & bc",
 	Example: "yy create all user",
 	Args:    cobra.ExactArgs(1),
 	Run:     runCreate,
@@ -84,6 +70,11 @@ func runCreate(cmd *cobra.Command, args []string) {
 	case "application":
 		c.createApplication()
 	case "bc":
+		c.createBc()
+	case "all":
+		c.CreateType = "application"
+		c.createApplication()
+		c.CreateType = "bc"
 		c.createBc()
 	default:
 		log.Fatalf("Invalid handler type: %s", c.CreateType)
