@@ -2,8 +2,8 @@ package create
 
 import (
 	"fmt"
-	"github.com/go-nunu/nunu/tpl"
 	"github.com/renfy96/yy/internal/pkg/helper"
+	"github.com/renfy96/yy/tpl"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -27,25 +27,25 @@ func NewCreate() *Create {
 }
 
 var CreateCmd = &cobra.Command{
-	Use:     "create [type] [handler-name]",
-	Short:   "Create a new handler/service/repository.tpl/model",
-	Example: "yy create handler user",
+	Use:     "create [type] [name]",
+	Short:   "Create a new application/bc",
+	Example: "yy create bc user",
 	Args:    cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
 	},
 }
-var CreateHandlerCmd = &cobra.Command{
-	Use:     "handler",
-	Short:   "Create a new handler",
-	Example: "yy create handler user",
+var CreateApplicationCmd = &cobra.Command{
+	Use:     "application",
+	Short:   "Create a new application",
+	Example: "yy create application user",
 	Args:    cobra.ExactArgs(1),
 	Run:     runCreate,
 }
-var CreateServiceCmd = &cobra.Command{
-	Use:     "service",
-	Short:   "Create a new service",
-	Example: "yy create service user",
+var CreateBCCmd = &cobra.Command{
+	Use:     "bc",
+	Short:   "Create a new bc",
+	Example: "yy create bc user",
 	Args:    cobra.ExactArgs(1),
 	Run:     runCreate,
 }
@@ -81,47 +81,13 @@ func runCreate(cmd *cobra.Command, args []string) {
 	c.FileNameFirstChar = string(c.FileNameTitleLower[0])
 
 	switch c.CreateType {
-	case "handler", "service", "repository.tpl", "model":
-		c.genFile()
-	case "all":
-
-		c.CreateType = "handler"
-		c.genFile()
-
-		c.CreateType = "service"
-		c.genFile()
-
-		c.CreateType = "repository.tpl"
-		c.genFile()
-
-		c.CreateType = "model"
-		c.genFile()
+	case "application":
+		c.createApplication()
+	case "bc":
+		c.createBc()
 	default:
 		log.Fatalf("Invalid handler type: %s", c.CreateType)
 	}
-
-}
-func (c *Create) genFile() {
-	filePath := c.FilePath
-	if filePath == "" {
-		filePath = fmt.Sprintf("internal/%s/", c.CreateType)
-	}
-	f := createFile(filePath, strings.ToLower(c.FileName)+".go")
-	if f == nil {
-		log.Printf("warn: file %s%s %s", filePath, strings.ToLower(c.FileName)+".go", "already exists.")
-		return
-	}
-	defer f.Close()
-
-	t, err := template.ParseFS(tpl.CreateTemplateFS, fmt.Sprintf("create/%s.tpl", c.CreateType))
-	if err != nil {
-		log.Fatalf("create %s error: %s", c.CreateType, err.Error())
-	}
-	err = t.Execute(f, c)
-	if err != nil {
-		log.Fatalf("create %s error: %s", c.CreateType, err.Error())
-	}
-	log.Printf("Created new %s: %s", c.CreateType, filePath+strings.ToLower(c.FileName)+".go")
 
 }
 func createFile(dirPath string, filename string) *os.File {
@@ -142,4 +108,54 @@ func createFile(dirPath string, filename string) *os.File {
 	}
 
 	return file
+}
+
+func (c *Create) createApplication() {
+	filePath := c.FilePath
+	if filePath == "" {
+		filePath = fmt.Sprintf("internal/%s/%s/", c.CreateType, strings.ToLower(c.FileName))
+	}
+	var (
+		pPath = filePath + "params/"
+		sPath = filePath + "service/"
+	)
+
+	genFile(c, pPath, "app-params", "params")
+
+	genFile(c, sPath, "app-service", strings.ToLower(c.FileName))
+}
+func (c *Create) createBc() {
+	filePath := c.FilePath
+	if filePath == "" {
+		filePath = fmt.Sprintf("internal/%s/%s/", c.CreateType, strings.ToLower(c.FileName))
+	}
+	var (
+		aPath = filePath + "application/"
+		sPath = filePath + "domain/"
+	)
+
+	genFile(c, aPath, "bc-query", "query_service")
+	genFile(c, aPath, "bc-command", "command_service")
+
+	genFile(c, sPath+"agg/", "bc-agg", strings.ToLower(c.FileName))
+	genFile(c, sPath+"repository/", "bc-repository", strings.ToLower(c.FileName))
+	genFile(c, sPath+"infrastructure/repository/", "bc-infra-repo", strings.ToLower(c.FileName))
+}
+
+func genFile(c *Create, dirPath, tmp, fileName string) {
+	f := createFile(dirPath, fileName+".go")
+	if f == nil {
+		log.Printf("warn: file %s%s %s", dirPath, strings.ToLower(fileName)+".go", "already exists.")
+		return
+	}
+	defer f.Close()
+	t, err := template.ParseFS(tpl.CreateTemplateFS, fmt.Sprintf("create/%s.tpl", tmp))
+	if err != nil {
+		log.Fatalf("create %s error: %s", fileName, err.Error())
+	}
+	err = t.Execute(f, c)
+	if err != nil {
+		log.Fatalf("create %s error: %s", c.CreateType, err.Error())
+	}
+	log.Printf("Created new %s: %s", c.CreateType, dirPath+strings.ToLower(c.FileName)+".go")
 }

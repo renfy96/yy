@@ -23,9 +23,15 @@ func init() {
 	rootCmd.AddCommand(wire.WireCmd)
 	rootCmd.AddCommand(run.RunCmd)
 	rootCmd.AddCommand(upgrade.UpgradeCmd)
-	create.CreateCmd.AddCommand(create.CreateHandlerCmd)
-	create.CreateCmd.AddCommand(create.CreateServiceCmd)
+	// 新增application
+	create.CreateCmd.AddCommand(create.CreateApplicationCmd)
+	create.CreateCmd.AddCommand(create.CreateBCCmd)
 	create.CreateCmd.AddCommand(create.CreateRepositoryCmd)
 	create.CreateCmd.AddCommand(create.CreateModelCmd)
 	create.CreateCmd.AddCommand(create.CreateAllCmd)
+}
+
+// Execute executes the root command.
+func Execute() error {
+	return rootCmd.Execute()
 }
