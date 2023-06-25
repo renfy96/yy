@@ -80,7 +80,7 @@ func run(cmd *cobra.Command, args []string) {
 	fmt.Printf("🎉 Project \u001B[36m%s\u001B[0m created successfully!\n\n", p.ProjectName)
 	fmt.Printf("Done. Now run:\n\n")
 	fmt.Printf("› \033[36mcd %s \033[0m\n", p.ProjectName)
-	fmt.Printf("› \033[36mnunu run \033[0m\n\n")
+	fmt.Printf("› \033[36myy run \033[0m\n\n")
 }
 
 func (p *Project) cloneTemplate() (bool, error) {

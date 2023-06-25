@@ -111,7 +111,7 @@ func (c *Create) createApplication() {
 		sPath = filePath + "service/"
 	)
 
-	genFile(c, pPath, "app-params", "params")
+	genFile(c, pPath, "app-params", strings.ToLower(c.FileName))
 
 	genFile(c, sPath, "app-service", strings.ToLower(c.FileName))
 }
@@ -129,8 +129,9 @@ func (c *Create) createBc() {
 	genFile(c, aPath, "bc-command", "command_service")
 
 	genFile(c, sPath+"agg/", "bc-agg", strings.ToLower(c.FileName))
+	genFile(c, sPath+"agg/impl/", "bc-agg-impl", strings.ToLower(c.FileName))
 	genFile(c, sPath+"repository/", "bc-repository", strings.ToLower(c.FileName))
-	genFile(c, sPath+"infrastructure/repository/", "bc-infra-repo", strings.ToLower(c.FileName))
+	genFile(c, "infrastructure/repository/", "bc-infra-repo", strings.ToLower(c.FileName))
 }
 
 func genFile(c *Create, dirPath, tmp, fileName string) {
