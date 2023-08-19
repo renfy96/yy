@@ -7,7 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 )
@@ -71,11 +73,16 @@ func runCreate(cmd *cobra.Command, args []string) {
 		c.createApplication()
 	case "bc":
 		c.createBc()
+	case "model":
+		c.createModel()
 	case "all":
 		c.CreateType = "application"
 		c.createApplication()
 		c.CreateType = "bc"
 		c.createBc()
+		c.createModel()
+		cmdExec := exec.Command("gofmt", "-w", " internal")
+		_, _ = cmdExec.CombinedOutput()
 	default:
 		log.Fatalf("Invalid handler type: %s", c.CreateType)
 	}
@@ -131,9 +138,20 @@ func (c *Create) createBc() {
 	genFile(c, sPath+"agg/", "bc-agg", strings.ToLower(c.FileName))
 	genFile(c, sPath+"agg/impl/", "bc-agg-impl", strings.ToLower(c.FileName))
 	genFile(c, sPath+"repository/", "bc-repository", strings.ToLower(c.FileName))
-	genFile(c, "infrastructure/repository/", "bc-infra-repo", strings.ToLower(c.FileName))
+	genFile(c, filePath+"infrastructure/repository/", "bc-infra-repo", strings.ToLower(c.FileName))
 }
+func (c *Create) createModel() {
+	filePath := c.FilePath
+	if filePath == "" {
+		filePath = fmt.Sprintf("internal/repository/model/")
+	}
 
+	genFile(c, filePath, "model", strings.ToLower(c.FileName))
+	// 在迁移中加入数据结构并生成对应orm
+	_ = searchAndWriteInfConst(c.FilePath+"cmd/migration/gen.go", "model."+c.FileName+"{},", "ApplyBasic")
+	cmdExec := exec.Command("go", "run ", c.FilePath+"cmd/migration/gen.go")
+	_, _ = cmdExec.CombinedOutput()
+}
 func genFile(c *Create, dirPath, tmp, fileName string) {
 	f := createFile(dirPath, fileName+".go")
 	if f == nil {
@@ -150,4 +168,36 @@ func genFile(c *Create, dirPath, tmp, fileName string) {
 		log.Fatalf("create %s error: %s", c.CreateType, err.Error())
 	}
 	log.Printf("Created new %s: %s", c.CreateType, dirPath+strings.ToLower(c.FileName)+".go")
+}
+func searchAndWriteInfConst(fileName, content, infoName string) error {
+
+	lineBytes, err := os.ReadFile(fileName)
+	var lines []string
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		contents := string(lineBytes)
+		lines = strings.Split(contents, "\n")
+	}
+	var newLines []string
+
+	for _, line := range lines {
+		newLines = append(newLines, line)
+		isIn, err := regexp.MatchString(infoName, line)
+		if err != nil {
+			log.Printf("匹配常量类里的interface报错 :%v", err)
+			continue
+		}
+		if isIn {
+			newLines = append(newLines, "\t\t"+content)
+		}
+	}
+
+	file, err := os.OpenFile(fileName, os.O_WRONLY, 0666)
+	defer file.Close()
+	_, err = file.WriteString(strings.Join(newLines, "\n"))
+	if err != nil {
+		return err
+	}
+	return nil
 }

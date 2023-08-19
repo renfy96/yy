@@ -9,7 +9,7 @@ type {{ .FileNameTitleLower }}Impl struct {
 	value *model.{{ .FileName }}
 }
 
-func NewAdminImpl(v *model.{{ .FileName }}) agg.{{ .FileName }} {
+func New{{ .FileName }}Impl(v *model.{{ .FileName }}) agg.{{ .FileName }} {
 	return &{{ .FileNameTitleLower }}Impl{
 		value: v,
 	}

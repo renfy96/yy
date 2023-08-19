@@ -1,8 +1,7 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
-	"{{ .ProjectName }}/internal/boudary_context/{{ .FileNameTitleLower }}/application"
+	"{{ .ProjectName }}/internal/bc/{{ .FileNameTitleLower }}/application"
 )
 
 type Service struct {
