@@ -81,8 +81,14 @@ func runCreate(cmd *cobra.Command, args []string) {
 		c.CreateType = "bc"
 		c.createBc()
 		c.createModel()
-		cmdExec := exec.Command("gofmt", "-w", " internal")
-		_, _ = cmdExec.CombinedOutput()
+		cmdExec := exec.Command("wire", "cmd/server/wire.go")
+		if b, err := cmdExec.CombinedOutput(); err != nil {
+			fmt.Println("wire err", err, string(b))
+		}
+		cmdExec = exec.Command("gofmt", "-w", "internal")
+		if b, err := cmdExec.CombinedOutput(); err != nil {
+			fmt.Println("fmt err", err, string(b))
+		}
 	default:
 		log.Fatalf("Invalid handler type: %s", c.CreateType)
 	}
@@ -149,8 +155,10 @@ func (c *Create) createModel() {
 	genFile(c, filePath, "model", strings.ToLower(c.FileName))
 	// 在迁移中加入数据结构并生成对应orm
 	_ = searchAndWriteInfConst(c.FilePath+"cmd/migration/gen.go", "model."+c.FileName+"{},", "ApplyBasic")
-	cmdExec := exec.Command("go", "run ", c.FilePath+"cmd/migration/gen.go")
-	_, _ = cmdExec.CombinedOutput()
+	cmdExec := exec.Command("go", "run", "cmd/migration/gen.go")
+	if b, err := cmdExec.CombinedOutput(); err != nil {
+		fmt.Println("gen err :", err, string(b))
+	}
 }
 func genFile(c *Create, dirPath, tmp, fileName string) {
 	f := createFile(dirPath, fileName+".go")
