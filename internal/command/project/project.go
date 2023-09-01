@@ -112,28 +112,42 @@ func (p *Project) cloneTemplate() (bool, error) {
 		prompt := &survey.Select{
 			Message: "Please select a layout:",
 			Options: []string{
+				"basic",
 				"v1",
 				"other",
 			},
 			Description: func(value string, index int) string {
-				if index == 0 {
+				switch index {
+				case 0:
+					return "基础版本"
+				case 1:
 					return "v1版本"
+				default:
+					return "其他版本待定"
 				}
-				return "其他版本待定"
 			},
 		}
 		err := survey.AskOne(prompt, &layout)
 		if err != nil {
 			return false, err
 		}
-		if layout != "v1" {
+		if layout != "v1" && layout != "basic" {
 			return false, errors.New("暂无其他版本")
+		}
+		switch layout {
+		case "basic":
+			repo = config.RepoBase
+		case "v1":
+			repo = config.RepoV1
+		default:
+			repo = config.RepoBase
 		}
 		err = os.RemoveAll(p.ProjectName)
 		if err != nil {
 			fmt.Println("remove old project error: ", err)
 			return false, err
 		}
+
 	} else {
 		repo = repoURL
 	}
